@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aditya's Portfolio</title>
+    <style>
+        /* Basic styles */
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            color: #fff;
+            background-color: #121212;
+            overflow: hidden;
+        }
+
+        /* Make canvas fill the window */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            /* Behind content */
+        }
+
+        /* Content container */
+        .content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        /* Navigation menu */
+        nav {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2;
+        }
+
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        nav ul li {
+            margin-bottom: 15px;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        nav ul li a:hover {
+            color: #00ff99;
+        }
+
+        /* Rainbow text effect */
+        .rainbow-text {
+            font-size: 36px;
+            font-weight: bold;
+            background: linear-gradient(90deg, red, orange, yellow, green, cyan, blue, violet);
+            background-size: 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: rainbow 8s infinite linear;
+        }
+
+        @keyframes rainbow {
+            0% {
+                background-position: 0%;
+            }
+
+            100% {
+                background-position: 100%;
+            }
+        }
+
+        /* Typewriter effect */
+        .typewriter {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff99;
+            white-space: nowrap;
+            overflow: hidden;
+            border-right: 2px solid #00ff99;
+            animation: typing 3s steps(20, end) infinite, blinkCaret 0.75s step-end infinite;
+        }
+
+        @keyframes typing {
+            0% {
+                width: 0;
+            }
+
+            50% {
+                width: 100%;
+            }
+
+            100% {
+                width: 0;
+            }
+        }
+
+        @keyframes blinkCaret {
+            50% {
+                border-color: transparent;
+            }
+        }
+
+        /* Footer for additional links */
+        footer {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1;
+            font-size: 14px;
+            color: #fff;
+            opacity: 0.8;
+        }
+
+        footer a {
+            color: #00ff99;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- p5.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+
+    <!-- Full-screen connected node animation -->
+    <script>
+        let nodes = [];
+        const maxDist = 150;
+        let rainbowColors = ["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#4B0082", "#9400D3"];
+        let colorIndex = 0;
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            for (let i = 0; i < 100; i++) {
+                nodes.push(new Node(random(width), random(height)));
+            }
+            stroke(0, 255, 255, 100);
+            strokeWeight(1);
+        }
+
+        function draw() {
+            background(18, 18, 18);
+
+            // Update and display nodes
+            for (let i = 0; i < nodes.length; i++) {
+                nodes[i].move();
+                nodes[i].display();
+
+                // Draw lines between nodes within maxDist
+                for (let j = i + 1; j < nodes.length; j++) {
+                    let d = dist(nodes[i].x, nodes[i].y, nodes[j].x, nodes[j].y);
+                    if (d < maxDist) {
+                        stroke(50, 255, 155, map(d, 0, maxDist, 255, 0));
+                        line(nodes[i].x, nodes[i].y, nodes[j].x, nodes[j].y);
+                    }
+                }
+            }
+
+            // Rainbow-colored cursor
+            fill(rainbowColors[colorIndex]);
+            colorIndex = (colorIndex + 1) % rainbowColors.length;
+            noStroke();
+            ellipse(mouseX, mouseY, 15, 15);
+        }
+
+        function mouseMoved() {
+            // Repel nodes from the cursor when it moves nearby
+            for (let i = 0; i < nodes.length; i++) {
+                let d = dist(mouseX, mouseY, nodes[i].x, nodes[i].y);
+                if (d < 100) {
+                    let angle = atan2(nodes[i].y - mouseY, nodes[i].x - mouseX);
+                    nodes[i].x += cos(angle) * 5;
+                    nodes[i].y += sin(angle) * 5;
+                }
+            }
+        }
+        // Generate new nodes when a node is clicked
+        function mousePressed() {
+            for (let i = 0; i < nodes.length; i++) {
+                if (dist(mouseX, mouseY, nodes[i].x, nodes[i].y) < nodes[i].r) {
+                    // Add 5 new nodes around the clicked node
+                    for (let j = 0; j < 5; j++) {
+                        let newNode = new Node(nodes[i].x + random(-20, 20), nodes[i].y + random(-20, 20));
+                        nodes.push(newNode);
+                    }
+                    break;
+                }
+            }
+        }
+        function mousePressed() {
+            // Add a new node near the click position
+            nodes.push(new Node(mouseX, mouseY));
+        }
+
+        class Node {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = random(-1, 1);
+                this.vy = random(-1, 1);
+                this.r = 5;
+            }
+
+            move() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x > width || this.x < 0) this.vx *= -1;
+                if (this.y > height || this.y < 0) this.vy *= -1;
+            }
+
+            display() {
+                fill(50, 255, 155);
+                noStroke();
+                ellipse(this.x, this.y, this.r * 2, this.r * 2);
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+    </script>
+
+    <!-- Content -->
+    <div class="content">
+        <h1 class="rainbow-text">I am Aditya, a</h1>
+        <div class="typewriter" id="profession"></div>
+    </div>
+
+    <!-- Navigation menu -->
+    <nav>
+        <ul>
+            <li><a href="#home">Home</a></li>
+            <li><a href="#projects">Projects</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+    </nav>
+    const socialMedia = [
+    {
+    "icon": "Instagram",
+    "url": "https://www.instagram.com/"
+    },
+    {
+    "icon": "Facebook",
+    "url": "https://www.facebook.com/"
+    },
+    {
+    "icon": "Twitter",
+    "url": "https://twitter.com/"
+    },
+    {
+    "icon": "YouTube",
+    "url": "https://www.youtube.com/"
+    },
+    {
+    "icon": "LinkedIn",
+    "url": "https://www.linkedin.com/"
+    },
+    {
+    "icon": "Discord",
+    "url": "https://discord.com/"
+    }
+    ];
+    <!-- Footer links -->
+    <footer>
+        <a href="#about">About Us</a> | <a href="#contact">Contact Us</a>
+    </footer>
+
+    <!-- JavaScript for cycling professions -->
+    <script>
+        const professions = ["Engineer", "Developer", "Tech Enthusiast"];
+        let professionIndex = 0;
+        const professionElement = document.getElementById('profession');
+
+        function cycleProfession() {
+            professionElement.textContent = professions[professionIndex];
+            professionIndex = (professionIndex + 1) % professions.length;
+            setTimeout(cycleProfession, 2000);
+        }
+
+        cycleProfession();
+    </script>
+</body>
+
+</html>
